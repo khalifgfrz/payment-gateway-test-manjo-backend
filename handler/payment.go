@@ -94,7 +94,7 @@ func PaymentCallback(w http.ResponseWriter, r *http.Request) {
 
 	res := map[string]interface{}{
 		"responseCode":          "2005100",
-		"responseMessage":       "Berhasil",
+		"responseMessage":       "Successful",
 		"transactionStatusDesc": req.TransactionStatusDesc,
 	}
 

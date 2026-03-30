@@ -21,13 +21,25 @@ type QRRequest struct {
 
 func GenerateQR(w http.ResponseWriter, r *http.Request) {
 	var req QRRequest
-	json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondError(w, http.StatusBadRequest, "Format request tidak valid")
+		return
+	}
 
-	amount, _ := strconv.ParseFloat(req.Amount.Value, 64)
+	amount, err := strconv.ParseFloat(req.Amount.Value, 64)
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "Format amount tidak valid")
+		return
+	}
+
+	if amount <= 0 {
+		respondError(w, http.StatusBadRequest, "Jumlah pembayaran harus lebih dari 0")
+		return
+	}
 
 	refNo := "REF" + strconv.FormatInt(time.Now().Unix(), 10)
 
-	_, err := database.DB.Exec(`
+	_, err = database.DB.Exec(`
 	INSERT INTO transactions 
 	(merchant_id, amount, trx_id, partner_reference_no, reference_no, status, transaction_date)
 	VALUES ($1,$2,$3,$4,$5,$6,$7)`,
@@ -41,7 +53,7 @@ func GenerateQR(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
